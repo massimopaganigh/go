@@ -191,7 +191,7 @@ var mapassign = mkmapnames("mapassign", "ptr")
 var mapdelete = mkmapnames("mapdelete", "")
 
 func mapfast(t *types.Type) int {
-	if t.Elem().Size() > abi.MapMaxElemBytes {
+	if t.Elem().Size() > abi.SwissMapMaxElemBytes {
 		return mapslow
 	}
 	switch reflectdata.AlgType(t.Key()) {

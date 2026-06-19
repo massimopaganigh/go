@@ -12,7 +12,7 @@ import (
 )
 
 //go:linkname runtime_mapaccess1_fast32 runtime.mapaccess1_fast32
-func runtime_mapaccess1_fast32(typ *abi.MapType, m *Map, key uint32) unsafe.Pointer {
+func runtime_mapaccess1_fast32(typ *abi.SwissMapType, m *Map, key uint32) unsafe.Pointer {
 	if race.Enabled && m != nil {
 		callerpc := sys.GetCallerPC()
 		pc := abi.FuncPCABIInternal(runtime_mapaccess1_fast32)
@@ -82,7 +82,7 @@ func runtime_mapaccess1_fast32(typ *abi.MapType, m *Map, key uint32) unsafe.Poin
 }
 
 //go:linkname runtime_mapaccess2_fast32 runtime.mapaccess2_fast32
-func runtime_mapaccess2_fast32(typ *abi.MapType, m *Map, key uint32) (unsafe.Pointer, bool) {
+func runtime_mapaccess2_fast32(typ *abi.SwissMapType, m *Map, key uint32) (unsafe.Pointer, bool) {
 	if race.Enabled && m != nil {
 		callerpc := sys.GetCallerPC()
 		pc := abi.FuncPCABIInternal(runtime_mapaccess2_fast32)
@@ -151,7 +151,7 @@ func runtime_mapaccess2_fast32(typ *abi.MapType, m *Map, key uint32) (unsafe.Poi
 	}
 }
 
-func (m *Map) putSlotSmallFast32(typ *abi.MapType, hash uintptr, key uint32) unsafe.Pointer {
+func (m *Map) putSlotSmallFast32(typ *abi.SwissMapType, hash uintptr, key uint32) unsafe.Pointer {
 	g := groupReference{
 		data: m.dirPtr,
 	}
@@ -192,7 +192,7 @@ func (m *Map) putSlotSmallFast32(typ *abi.MapType, hash uintptr, key uint32) uns
 }
 
 //go:linkname runtime_mapassign_fast32 runtime.mapassign_fast32
-func runtime_mapassign_fast32(typ *abi.MapType, m *Map, key uint32) unsafe.Pointer {
+func runtime_mapassign_fast32(typ *abi.SwissMapType, m *Map, key uint32) unsafe.Pointer {
 	if m == nil {
 		panic(errNilAssign)
 	}
@@ -217,7 +217,7 @@ func runtime_mapassign_fast32(typ *abi.MapType, m *Map, key uint32) unsafe.Point
 	}
 
 	if m.dirLen == 0 {
-		if m.used < abi.MapGroupSlots {
+		if m.used < abi.SwissMapGroupSlots {
 			elem := m.putSlotSmallFast32(typ, hash, key)
 
 			if m.writing == 0 {
@@ -332,7 +332,7 @@ outer:
 // TODO(prattmic): With some compiler refactoring we could avoid duplication of this function.
 //
 //go:linkname runtime_mapassign_fast32ptr runtime.mapassign_fast32ptr
-func runtime_mapassign_fast32ptr(typ *abi.MapType, m *Map, key unsafe.Pointer) unsafe.Pointer {
+func runtime_mapassign_fast32ptr(typ *abi.SwissMapType, m *Map, key unsafe.Pointer) unsafe.Pointer {
 	if m == nil {
 		panic(errNilAssign)
 	}
@@ -357,7 +357,7 @@ func runtime_mapassign_fast32ptr(typ *abi.MapType, m *Map, key unsafe.Pointer) u
 	}
 
 	if m.dirLen == 0 {
-		if m.used < abi.MapGroupSlots {
+		if m.used < abi.SwissMapGroupSlots {
 			elem := m.putSlotSmallFastPtr(typ, hash, key)
 
 			if m.writing == 0 {
@@ -462,7 +462,7 @@ outer:
 }
 
 //go:linkname runtime_mapdelete_fast32 runtime.mapdelete_fast32
-func runtime_mapdelete_fast32(typ *abi.MapType, m *Map, key uint32) {
+func runtime_mapdelete_fast32(typ *abi.SwissMapType, m *Map, key uint32) {
 	if race.Enabled {
 		callerpc := sys.GetCallerPC()
 		pc := abi.FuncPCABIInternal(runtime_mapdelete_fast32)

@@ -54,7 +54,7 @@ func Init() {
 	ChanType = FromReflect(reflect.TypeFor[abi.ChanType]())
 	FuncType = FromReflect(reflect.TypeFor[abi.FuncType]())
 	InterfaceType = FromReflect(reflect.TypeFor[abi.InterfaceType]())
-	MapType = FromReflect(reflect.TypeFor[abi.MapType]())
+	MapType = FromReflect(reflect.TypeFor[abi.SwissMapType]())
 	PtrType = FromReflect(reflect.TypeFor[abi.PtrType]())
 	SliceType = FromReflect(reflect.TypeFor[abi.SliceType]())
 	StructType = FromReflect(reflect.TypeFor[abi.StructType]())

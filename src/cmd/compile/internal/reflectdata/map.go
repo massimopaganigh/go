@@ -15,10 +15,10 @@ import (
 	"internal/abi"
 )
 
-// MapGroupType makes the map slot group type given the type of the map.
-func MapGroupType(t *types.Type) *types.Type {
-	if t.MapType().Group != nil {
-		return t.MapType().Group
+// SwissMapGroupType makes the map slot group type given the type of the map.
+func SwissMapGroupType(t *types.Type) *types.Type {
+	if t.MapType().SwissGroup != nil {
+		return t.MapType().SwissGroup
 	}
 
 	// Builds a type representing a group structure for the given map type.
@@ -29,7 +29,7 @@ func MapGroupType(t *types.Type) *types.Type {
 	//
 	// type group struct {
 	//     ctrl uint64
-	//     slots [abi.MapGroupSlots]struct {
+	//     slots [abi.SwissMapGroupSlots]struct {
 	//         key  keyType
 	//         elem elemType
 	//     }
@@ -39,10 +39,10 @@ func MapGroupType(t *types.Type) *types.Type {
 	elemtype := t.Elem()
 	types.CalcSize(keytype)
 	types.CalcSize(elemtype)
-	if keytype.Size() > abi.MapMaxKeyBytes {
+	if keytype.Size() > abi.SwissMapMaxKeyBytes {
 		keytype = types.NewPtr(keytype)
 	}
-	if elemtype.Size() > abi.MapMaxElemBytes {
+	if elemtype.Size() > abi.SwissMapMaxElemBytes {
 		elemtype = types.NewPtr(elemtype)
 	}
 
@@ -53,7 +53,7 @@ func MapGroupType(t *types.Type) *types.Type {
 	slot := types.NewStruct(slotFields)
 	slot.SetNoalg(true)
 
-	slotArr := types.NewArray(slot, abi.MapGroupSlots)
+	slotArr := types.NewArray(slot, abi.SwissMapGroupSlots)
 	slotArr.SetNoalg(true)
 
 	fields := []*types.Field{
@@ -76,25 +76,25 @@ func MapGroupType(t *types.Type) *types.Type {
 		// the end to ensure pointers are valid.
 		base.Fatalf("bad group size for %v", t)
 	}
-	if t.Key().Size() > abi.MapMaxKeyBytes && !keytype.IsPtr() {
+	if t.Key().Size() > abi.SwissMapMaxKeyBytes && !keytype.IsPtr() {
 		base.Fatalf("key indirect incorrect for %v", t)
 	}
-	if t.Elem().Size() > abi.MapMaxElemBytes && !elemtype.IsPtr() {
+	if t.Elem().Size() > abi.SwissMapMaxElemBytes && !elemtype.IsPtr() {
 		base.Fatalf("elem indirect incorrect for %v", t)
 	}
 
-	t.MapType().Group = group
+	t.MapType().SwissGroup = group
 	group.StructType().Map = t
 	return group
 }
 
-var cachedMapTableType *types.Type
+var cachedSwissTableType *types.Type
 
-// mapTableType returns a type interchangeable with internal/runtime/maps.table.
+// swissTableType returns a type interchangeable with internal/runtime/maps.table.
 // Make sure this stays in sync with internal/runtime/maps/table.go.
-func mapTableType() *types.Type {
-	if cachedMapTableType != nil {
-		return cachedMapTableType
+func swissTableType() *types.Type {
+	if cachedSwissTableType != nil {
+		return cachedSwissTableType
 	}
 
 	// type table struct {
@@ -135,17 +135,17 @@ func mapTableType() *types.Type {
 		base.Fatalf("internal/runtime/maps.table size not correct: got %d, want %d", table.Size(), size)
 	}
 
-	cachedMapTableType = table
+	cachedSwissTableType = table
 	return table
 }
 
-var cachedMapType *types.Type
+var cachedSwissMapType *types.Type
 
-// MapType returns a type interchangeable with internal/runtime/maps.Map.
+// SwissMapType returns a type interchangeable with internal/runtime/maps.Map.
 // Make sure this stays in sync with internal/runtime/maps/map.go.
-func MapType() *types.Type {
-	if cachedMapType != nil {
-		return cachedMapType
+func SwissMapType() *types.Type {
+	if cachedSwissMapType != nil {
+		return cachedSwissMapType
 	}
 
 	// type Map struct {
@@ -191,23 +191,23 @@ func MapType() *types.Type {
 		base.Fatalf("internal/runtime/maps.Map size not correct: got %d, want %d", m.Size(), size)
 	}
 
-	cachedMapType = m
+	cachedSwissMapType = m
 	return m
 }
 
-var cachedMapIterType *types.Type
+var cachedSwissIterType *types.Type
 
-// MapIterType returns a type interchangeable with internal/runtime/maps.Iter.
-// Make sure this stays in sync with internal/runtime/maps/table.go.
-func MapIterType() *types.Type {
-	if cachedMapIterType != nil {
-		return cachedMapIterType
+// SwissMapIterType returns a type interchangeable with runtime.hiter.
+// Make sure this stays in sync with runtime/map.go.
+func SwissMapIterType() *types.Type {
+	if cachedSwissIterType != nil {
+		return cachedSwissIterType
 	}
 
 	// type Iter struct {
 	//    key  unsafe.Pointer // *Key
 	//    elem unsafe.Pointer // *Elem
-	//    typ  unsafe.Pointer // *MapType
+	//    typ  unsafe.Pointer // *SwissMapType
 	//    m    *Map
 	//
 	//    groupSlotOffset uint64
@@ -231,13 +231,13 @@ func MapIterType() *types.Type {
 		makefield("key", types.Types[types.TUNSAFEPTR]),  // Used in range.go for TMAP.
 		makefield("elem", types.Types[types.TUNSAFEPTR]), // Used in range.go for TMAP.
 		makefield("typ", types.Types[types.TUNSAFEPTR]),
-		makefield("m", types.NewPtr(MapType())),
+		makefield("m", types.NewPtr(SwissMapType())),
 		makefield("groupSlotOffset", types.Types[types.TUINT64]),
 		makefield("dirOffset", types.Types[types.TUINT64]),
 		makefield("clearSeq", types.Types[types.TUINT64]),
 		makefield("globalDepth", types.Types[types.TUINT8]),
 		makefield("dirIdx", types.Types[types.TINT]),
-		makefield("tab", types.NewPtr(mapTableType())),
+		makefield("tab", types.NewPtr(swissTableType())),
 		makefield("group", types.Types[types.TUNSAFEPTR]),
 		makefield("entryIdx", types.Types[types.TUINT64]),
 	}
@@ -257,13 +257,13 @@ func MapIterType() *types.Type {
 		base.Fatalf("internal/runtime/maps.Iter size not correct: got %d, want %d", iter.Size(), size)
 	}
 
-	cachedMapIterType = iter
+	cachedSwissIterType = iter
 	return iter
 }
 
-func writeMapType(t *types.Type, lsym *obj.LSym, c rttype.Cursor) {
-	// internal/abi.MapType
-	gtyp := MapGroupType(t)
+func writeSwissMapType(t *types.Type, lsym *obj.LSym, c rttype.Cursor) {
+	// internal/abi.SwissMapType
+	gtyp := SwissMapGroupType(t)
 	s1 := writeType(t.Key())
 	s2 := writeType(t.Elem())
 	s3 := writeType(gtyp)
@@ -287,16 +287,16 @@ func writeMapType(t *types.Type, lsym *obj.LSym, c rttype.Cursor) {
 	c.Field("ElemOff").WriteUintptr(uint64(elemOff))
 	var flags uint32
 	if needkeyupdate(t.Key()) {
-		flags |= abi.MapNeedKeyUpdate
+		flags |= abi.SwissMapNeedKeyUpdate
 	}
 	if hashMightPanic(t.Key()) {
-		flags |= abi.MapHashMightPanic
+		flags |= abi.SwissMapHashMightPanic
 	}
-	if t.Key().Size() > abi.MapMaxKeyBytes {
-		flags |= abi.MapIndirectKey
+	if t.Key().Size() > abi.SwissMapMaxKeyBytes {
+		flags |= abi.SwissMapIndirectKey
 	}
-	if t.Elem().Size() > abi.MapMaxKeyBytes {
-		flags |= abi.MapIndirectElem
+	if t.Elem().Size() > abi.SwissMapMaxKeyBytes {
+		flags |= abi.SwissMapIndirectElem
 	}
 	c.Field("Flags").WriteUint32(flags)
 
