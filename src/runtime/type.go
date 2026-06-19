@@ -9,6 +9,7 @@ package runtime
 import (
 	"internal/abi"
 	"internal/goarch"
+	"internal/goexperiment"
 	"internal/runtime/atomic"
 	"unsafe"
 )
@@ -604,8 +605,13 @@ func typesEqual(t, v *_type, seen map[_typePair]struct{}) bool {
 		}
 		return true
 	case abi.Map:
-		mt := (*abi.SwissMapType)(unsafe.Pointer(t))
-		mv := (*abi.SwissMapType)(unsafe.Pointer(v))
+		if goexperiment.SwissMap {
+			mt := (*abi.SwissMapType)(unsafe.Pointer(t))
+			mv := (*abi.SwissMapType)(unsafe.Pointer(v))
+			return typesEqual(mt.Key, mv.Key, seen) && typesEqual(mt.Elem, mv.Elem, seen)
+		}
+		mt := (*abi.OldMapType)(unsafe.Pointer(t))
+		mv := (*abi.OldMapType)(unsafe.Pointer(v))
 		return typesEqual(mt.Key, mv.Key, seen) && typesEqual(mt.Elem, mv.Elem, seen)
 	case abi.Pointer:
 		pt := (*ptrtype)(unsafe.Pointer(t))

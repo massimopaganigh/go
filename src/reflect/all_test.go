@@ -12,6 +12,7 @@ import (
 	"go/token"
 	"internal/asan"
 	"internal/goarch"
+	"internal/goexperiment"
 	"internal/msan"
 	"internal/race"
 	"internal/testenv"
@@ -1276,6 +1277,10 @@ var deepEqualPerfTests = []struct {
 }
 
 func TestDeepEqualAllocs(t *testing.T) {
+	// TODO(prattmic): maps on stack
+	if goexperiment.SwissMap {
+		t.Skipf("Maps on stack not yet implemented")
+	}
 	if asan.Enabled {
 		t.Skip("test allocates more with -asan; see #70079")
 	}
@@ -7325,8 +7330,7 @@ func TestGCBits(t *testing.T) {
 	verifyGCBits(t, TypeOf(([][10000]Xscalar)(nil)), lit(1))
 	verifyGCBits(t, SliceOf(ArrayOf(10000, Tscalar)), lit(1))
 
-	// For maps, we don't manually construct GC data, instead using the
-	// public reflect API in groupAndSlotOf.
+	testGCBitsMap(t)
 }
 
 func rep(n int, b []byte) []byte { return bytes.Repeat(b, n) }

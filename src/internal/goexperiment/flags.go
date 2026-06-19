@@ -100,6 +100,11 @@ type Flags struct {
 	// inlining phase within the Go compiler.
 	NewInliner bool
 
+	// SwissMap enables the SwissTable-based map implementation.
+	// When false (the default in this fork), the legacy Go 1.22-style
+	// bucket-based map implementation is used.
+	SwissMap bool
+
 	// Dwarf5 enables DWARF version 5 debug info generation.
 	Dwarf5 bool
 

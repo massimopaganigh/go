@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+//go:build goexperiment.swissmap
+
 package runtime
 
 import (
@@ -14,7 +16,8 @@ import (
 // Legacy //go:linkname compatibility shims
 //
 // The functions below are unused by the toolchain, and exist only for
-// compatibility with existing //go:linkname use in the ecosystem.
+// compatibility with existing //go:linkname use in the ecosystem (and in
+// map_noswiss.go for normal use via GOEXPERIMENT=noswissmap).
 
 // linknameIter is the it argument to mapiterinit and mapiternext.
 //
@@ -24,7 +27,7 @@ import (
 //	type hiter struct {
 //		key         unsafe.Pointer
 //		elem        unsafe.Pointer
-//		t           *maptype // old map abi.Type
+//		t           *maptype
 //		h           *hmap
 //		buckets     unsafe.Pointer
 //		bptr        *bmap
