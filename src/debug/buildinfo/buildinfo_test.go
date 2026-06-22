@@ -11,6 +11,7 @@ import (
 	"encoding/binary"
 	"flag"
 	"fmt"
+	"internal/buildcfg"
 	"internal/obscuretestdata"
 	"internal/testenv"
 	"os"
@@ -266,6 +267,92 @@ func TestReadFile(t *testing.T) {
 						})
 					}
 				})
+			}
+		})
+	}
+}
+
+func TestReadFileGOEXPERIMENTSettings(t *testing.T) {
+	if testing.Short() {
+		t.Skip("test requires compiling and linking, which may be slow")
+	}
+	testenv.MustHaveGoBuild(t)
+
+	build := func(t *testing.T, goexp string) string {
+		t.Helper()
+
+		dir := t.TempDir()
+		gomodPath := filepath.Join(dir, "go.mod")
+		gomodData := []byte("module example.com/m\ngo 1.18\n")
+		if err := os.WriteFile(gomodPath, gomodData, 0666); err != nil {
+			t.Fatal(err)
+		}
+		helloPath := filepath.Join(dir, "hello.go")
+		helloData := []byte("package main\nfunc main() {}\n")
+		if err := os.WriteFile(helloPath, helloData, 0666); err != nil {
+			t.Fatal(err)
+		}
+		outPath := filepath.Join(dir, "hello")
+		cmd := exec.Command(testenv.GoToolPath(t), "build", "-o="+outPath)
+		cmd.Dir = dir
+		cmd.Env = append(os.Environ(), "GO111MODULE=on", "GOOS="+runtime.GOOS, "GOARCH="+runtime.GOARCH)
+		if goexp != "" {
+			cmd.Env = append(cmd.Env, "GOEXPERIMENT="+goexp)
+		}
+		stderr := &strings.Builder{}
+		cmd.Stderr = stderr
+		if err := cmd.Run(); err != nil {
+			t.Fatalf("failed building test file: %v\n%s", err, stderr.String())
+		}
+		return outPath
+	}
+
+	// fieldtrack is a stable, default-off experiment that can be flipped on and off
+	// without depending on platform-specific defaults. The assertions below then
+	// verify the full GOEXPERIMENT.* matrix returned for the build.
+	for _, goexp := range []string{"", "fieldtrack", "nofieldtrack"} {
+		t.Run("goexperiment="+goexp, func(t *testing.T) {
+			name := build(t, goexp)
+			info, err := buildinfo.ReadFile(name)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			settings := make(map[string]string, len(info.Settings))
+			for _, s := range info.Settings {
+				settings[s.Key] = s.Value
+			}
+
+			if goexp == "" {
+				if _, ok := settings["GOEXPERIMENT"]; ok {
+					t.Fatal("unexpected GOEXPERIMENT setting for default build")
+				}
+			} else if got := settings["GOEXPERIMENT"]; got != goexp {
+				t.Fatalf("GOEXPERIMENT setting = %q, want %q", got, goexp)
+			}
+
+			exp, err := buildcfg.ParseGOEXPERIMENT(runtime.GOOS, runtime.GOARCH, goexp)
+			if err != nil {
+				t.Fatal(err)
+			}
+			all := exp.All()
+			for _, setting := range all {
+				enabled := !strings.HasPrefix(setting, "no")
+				name := "GOEXPERIMENT." + strings.TrimPrefix(setting, "no")
+				want := strconv.FormatBool(enabled)
+				if got := settings[name]; got != want {
+					t.Fatalf("%s = %q, want %q", name, got, want)
+				}
+			}
+
+			var gotCount int
+			for key := range settings {
+				if strings.HasPrefix(key, "GOEXPERIMENT.") {
+					gotCount++
+				}
+			}
+			if gotCount != len(all) {
+				t.Fatalf("got %d GOEXPERIMENT.* settings, want %d", gotCount, len(all))
 			}
 		})
 	}

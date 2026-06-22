@@ -80,6 +80,8 @@ type Module struct {
 //   - DefaultGODEBUG: the effective GODEBUG settings
 //   - GOARCH: the architecture target
 //   - GOAMD64/GOARM/GO386/etc: the architecture feature level for GOARCH
+//   - GOEXPERIMENT: the raw GOEXPERIMENT setting, when non-empty
+//   - GOEXPERIMENT.x: whether the experiment x is enabled ("true" or "false")
 //   - GOOS: the operating system target
 //   - GOFIPS140: the frozen FIPS 140-3 module version, if any
 //   - vcs: the version control system for the source tree where the build ran

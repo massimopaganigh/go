@@ -2314,6 +2314,11 @@ func appendBuildSetting(info *debug.BuildInfo, key, value string) {
 	info.Settings = append(info.Settings, debug.BuildSetting{Key: key, Value: value})
 }
 
+type experimentSetting struct {
+	name    string
+	enabled bool
+}
+
 // setBuildInfo gathers build information and sets it into
 // p.Internal.BuildInfo, which will later be formatted as a string and embedded
 // in the binary. setBuildInfo should only be called on a main package with no
@@ -2473,6 +2478,22 @@ func (p *Package) setBuildInfo(ctx context.Context, f *modfetch.Fetcher, autoVCS
 	appendSetting("GOARCH", cfg.BuildContext.GOARCH)
 	if cfg.RawGOEXPERIMENT != "" {
 		appendSetting("GOEXPERIMENT", cfg.RawGOEXPERIMENT)
+	}
+	if cfg.Experiment != nil {
+		allExperiments := cfg.Experiment.All()
+		experiments := make([]experimentSetting, 0, len(allExperiments))
+		for _, exp := range allExperiments {
+			experiments = append(experiments, experimentSetting{
+				name:    strings.TrimPrefix(exp, "no"),
+				enabled: !strings.HasPrefix(exp, "no"),
+			})
+		}
+		slices.SortFunc(experiments, func(a, b experimentSetting) int {
+			return strings.Compare(a.name, b.name)
+		})
+		for _, exp := range experiments {
+			appendSetting("GOEXPERIMENT."+exp.name, strconv.FormatBool(exp.enabled))
+		}
 	}
 	if fips140.Enabled() {
 		appendSetting("GOFIPS140", fips140.Version())
